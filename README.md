@@ -42,6 +42,10 @@ The project works with **synthetic simulated signals** as well as **real wireles
 - **Streamlit** – interactive web app
 
 ---
+<img width="1920" height="1080" alt="Screenshot from 2026-03-22 21-18-29" src="https://github.com/user-attachments/assets/cd233303-c2fd-4a15-a1d6-792ae4cb44e9" />
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/40dd4517-4b85-49f3-acc1-9e5baf9d50f9" />
+
 
 ## 📦 Installation
 
