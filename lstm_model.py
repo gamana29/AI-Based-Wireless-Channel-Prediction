@@ -1,82 +1,76 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error, r2_score
-
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
-# ---------------------------
-# LOAD DATA
-# ---------------------------
-data = pd.read_csv("data.csv")
+# 1. Generate sine wave data
+t = np.linspace(0, 100, 1000)
+data = np.sin(t)
 
-signal = data["signal"].values.reshape(-1, 1)
-
-# ---------------------------
-# NORMALIZATION
-# ---------------------------
+# 2. Normalize data
 scaler = MinMaxScaler()
-signal_scaled = scaler.fit_transform(signal)
+data_scaled = scaler.fit_transform(data.reshape(-1, 1))
 
-# ---------------------------
-# CREATE DATASET
-# ---------------------------
-def create_dataset(data, window_size=5):
+# 3. Create sequences
+def create_sequences(data, seq_length):
     X, y = [], []
-    for i in range(len(data) - window_size):
-        X.append(data[i:i+window_size])
-        y.append(data[i+window_size])
+    for i in range(len(data) - seq_length):
+        X.append(data[i:i+seq_length])
+        y.append(data[i+seq_length])
     return np.array(X), np.array(y)
 
-window_size = 5
-X, y = create_dataset(signal_scaled, window_size)
+sequence_length = 20
+X, y = create_sequences(data_scaled, sequence_length)
 
-# Reshape for LSTM
-X = X.reshape((X.shape[0], X.shape[1], 1))
+# 4. Split data
+split = int(0.8 * len(X))
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
 
-# ---------------------------
-# BUILD MODEL
-# ---------------------------
-model = Sequential()
-model.add(LSTM(50, input_shape=(X.shape[1], 1)))
-model.add(Dense(1))
+# 5. Build LSTM model
+model = Sequential([
+    LSTM(64, return_sequences=True, input_shape=(sequence_length, 1)),
+    LSTM(64),
+    Dense(1)
+])
 
 model.compile(optimizer='adam', loss='mse')
 
-# ---------------------------
-# TRAIN MODEL
-# ---------------------------
-print("Training LSTM model...")
-model.fit(X, y, epochs=15, batch_size=8, verbose=1)
+# 6. Train model
+model.fit(X_train, y_train, epochs=30, batch_size=32, verbose=1)
 
-# ---------------------------
-# PREDICTIONS
-# ---------------------------
-predictions = model.predict(X)
+# 7. Predict future values
+predictions = []
+
+# Start with last test sequence
+current_seq = X_test[0]
+
+for _ in range(200):
+    pred = model.predict(current_seq.reshape(1, sequence_length, 1), verbose=0)
+    predictions.append(pred[0][0])
+    
+    # Slide window
+    current_seq = np.append(current_seq[1:], pred, axis=0)
 
 # Convert back to original scale
-predictions = scaler.inverse_transform(predictions)
-y_actual = scaler.inverse_transform(y)
+predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
 
-# ---------------------------
-# METRICS
-# ---------------------------
-mse = mean_squared_error(y_actual, predictions)
-r2 = r2_score(y_actual, predictions)
+# 8. Plot results
+plt.figure(figsize=(12, 6))
 
-print("\n📊 LSTM Results:")
-print("MSE:", mse)
-print("R² Score:", r2)
+# Original signal
+plt.plot(t, data, label="Original Signal")
 
-# ---------------------------
-# PLOT
-# ---------------------------
-plt.figure(figsize=(10,5))
-plt.plot(y_actual, label="Actual")
-plt.plot(predictions, label="Predicted")
-plt.title("LSTM Wireless Channel Prediction")
+# Predicted signal (future)
+future_t = np.linspace(t[-1], t[-1] + 20, 200)
+plt.plot(future_t, predictions, label="Predicted Signal (LSTM)", color='orange')
+
+plt.title("Accurate LSTM Wireless Channel Prediction")
+plt.xlabel("Time")
+plt.ylabel("Signal")
 plt.legend()
+plt.grid()
+
 plt.show()
