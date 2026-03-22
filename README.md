@@ -81,4 +81,23 @@ python lstm_model.py
 └── README.md
 ```
 
+### 🤝 Contributing
+
+Contributions are welcome! You can:
+
+Report issues 🐛
+
+Suggest new analysis features 💡
+
+Submit pull requests 📬
+
+### 📜 License
+
+This project is licensed under the MIT License. See LICENSE for details.
+
+Made with 💻 by Gamana
+Explore more at https://github.com/gamana29
+
+
+--- 
 
