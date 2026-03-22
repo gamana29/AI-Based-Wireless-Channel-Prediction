@@ -1,0 +1,217 @@
+Wireless communication signals are highly dynamic due to:
+
+Multipath fading: Signals reflect off surfaces causing constructive and destructive interference.
+Shadowing and obstacles: Buildings, trees, and objects weaken the signal.
+Noise and interference: Thermal noise, other devices, and environmental factors.
+User mobility: Moving devices experience rapid signal changes.
+
+Predicting wireless signal strength over time is critical for:
+
+Optimizing wireless network performance (5G/6G, IoT).
+Scheduling transmissions efficiently to avoid dropped connections.
+Improving Quality of Service (QoS) in wireless applications.
+Research and simulation for adaptive communication algorithms.
+
+This project provides a framework to predict signal strength using machine learning and deep learning, demonstrating:
+
+Classical regression (Linear Regression)
+Ensemble learning (Random Forest)
+Recurrent neural networks (LSTM)
+
+The project consists of 7 key stages:
+
+Stage 1 – Data Generation / Loading
+
+Synthetic Data:
+
+Purpose: Test models without requiring real datasets.
+Generated as a noisy sine wave:
+s(t)=sin⁡(t)+ϵ
+s(t)=sin(t)+ϵ
+
+Where 
+ϵ∼N(0,0.2)
+ϵ∼N(0,0.2) is Gaussian noise.
+
+time = np.arange(0, 100, 0.1)
+signal = np.sin(time) + np.random.normal(0, 0.2, len(time))
+Noise simulates real-world unpredictability.
+Periodic sine wave mimics signal fluctuations due to multipath effects.
+
+Real Data:
+
+Loaded from CSV (data/data.csv), e.g., RSSI values measured over time.
+Example:
+time_step	signal
+0	-67
+1	-66.5
+2	-65.8
+
+Stage 2 – Preprocessing
+
+Sliding Window Technique:
+
+ML models predict next value based on previous N samples.
+Window size 
+w
+w determines how far back the model looks.
+def create_dataset(data, window_size=5):
+    X, y = [], []
+    for i in range(len(data) - window_size):
+        X.append(data[i:i+window_size])
+        y.append(data[i+window_size])
+    return np.array(X), np.array(y)
+Example with window_size = 5:
+X (input)	y (target)
+[s0, s1, s2, s3, s4]	s5
+
+Normalization (for LSTM):
+
+Scales data to [0,1] or standardized values.
+Important for deep learning convergence.
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+signal_scaled = scaler.fit_transform(signal.reshape(-1, 1))
+
+Stage 3 – Model Training
+A. Linear Regression
+Predicts a linear relationship:
+
+	y=β0​+β1​x1​+⋯+βn​xn​
+
+Easy baseline.
+Implementation:
+```bash 
+from sklearn.linear_model import LinearRegression
+model = LinearRegression()
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+```
+
+
+Pros: Fast, interpretable.
+Cons: Cannot capture nonlinear fluctuations.
+
+B. Random Forest Regression
+Ensemble of decision trees.
+Each tree trained on a subset of data.
+Predictions averaged across all trees:
+y^​=T1​t=1∑T​treet​(x)
+	​
+Handles nonlinearities and noisy data.
+Implementation:
+```bash
+from sklearn.ensemble import RandomForestRegressor
+model = RandomForestRegressor(n_estimators=100)
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+```
+
+Pros: Handles complex patterns, robust to overfitting.
+Cons: Slower than linear regression, less interpretable.
+
+
+C. LSTM (Long Short-Term Memory)
+Specialized RNN for sequential data.
+
+Predicts sequential signals considering past history.
+
+Implementation Steps:
+
+Reshape data to [samples, timesteps, features]:
+X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+Build model:
+```bash 
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+
+model = Sequential()
+model.add(LSTM(50, input_shape=(window_size, 1)))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mse')
+```
+Stage 4 – Model Evaluation
+Metrics:
+Mean Squared Error (MSE):
+MSE=n1​i=1∑n​(yi​−y^​i​)2
+R² Score:
+R2=1−∑(yi​−yˉ​)2∑(yi​−y^​i​)2​
+
+
+Visual comparison with plots:
+plt.plot(y_test, label="Actual")
+plt.plot(predictions, label="Predicted")
+plt.legend()
+plt.show()
+Observation:
+Linear Regression captures trend.
+Random Forest smooths out noise.
+LSTM tracks waveform more accurately.
+
+
+Stage 5 – Deployment via Streamlit
+Users can choose model, view predictions, and plot results interactively.
+import streamlit as st
+model_choice = st.selectbox("Choose Model", ["Linear Regression", "Random Forest", "LSTM"])
+If LSTM code is private, app handles it gracefully:
+try:
+    from lstm_model import train_lstm, predict_lstm
+except ImportError:
+    st.error("LSTM code not available")
+Plots are displayed in real-time:
+st.pyplot(fig)
+st.success(f"{model_choice} Prediction Completed 🚀")
+
+
+Stage 6 – Results & Observations
+Model	Pros	Cons
+Linear Regression	Simple, interpretable	Cannot model nonlinear data
+Random Forest	Handles noise, nonlinear signals	Slower, less interpretable
+LSTM	Captures long-term trends	Requires more data & compute
+
+Example Metrics:
+
+Test MSE: 0.012
+R² Score: 0.95
+LSTM best captures waveform continuity and recurring patterns.
+Random Forest is robust for real noisy signals.
+
+Stage 7 – Project Extensions
+Use 5G/6G real datasets for accurate prediction.
+Explore GRU / Transformer models for sequence prediction.
+Streamlit live app with real-time wireless streaming data.
+Hyperparameter optimization (window size, LSTM units, Random Forest trees).
+Protect sensitive LSTM code with a private repo or obfuscation.
+
+
+Stage 6 – Results & Observations
+Model	Pros	Cons
+Linear Regression	Simple, interpretable	Cannot model nonlinear data
+Random Forest	Handles noise, nonlinear signals	Slower, less interpretable
+LSTM	Captures long-term trends	Requires more data & compute
+
+Example Metrics:
+
+Test MSE: 0.012
+R² Score: 0.95
+LSTM best captures waveform continuity and recurring patterns.
+Random Forest is robust for real noisy signals.
+Stage 7 – Project Extensions
+Use 5G/6G real datasets for accurate prediction.
+Explore GRU / Transformer models for sequence prediction.
+Streamlit live app with real-time wireless streaming data.
+Hyperparameter optimization (window size, LSTM units, Random Forest trees).
+Protect sensitive LSTM code with a private repo or obfuscation.
+
+
+This project is a complete wireless channel prediction framework, combining:
+
+Synthetic signal simulation
+Real dataset handling
+Linear, ensemble, and deep learning models
+Evaluation metrics
+Interactive deployment
+
+It demonstrates strong skills in ML, DL, time-series analysis, and deployment, making it a solid showcase for research or portfolio purposes.
+
+
