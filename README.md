@@ -84,6 +84,7 @@ python lstm_model.py
 ├── requirements.txt
 └── README.md
 ```
+---
 
 ### 🤝 Contributing
 
